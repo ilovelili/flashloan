@@ -1,0 +1,35 @@
+{
+  "name": "flashloan",
+  "version": "1.0.0",
+  "description": "profitable flashloan",
+  "license": "ISC",
+  "main": "index.js",
+  "scripts": {
+    "price": "node poll-price.js",
+    "arb": "node run-arbitrage.js",
+    "start": "concurrently \"npm run price\" \"npm run arb\"",
+    "fork": "ganache-cli --fork https://mainnet.infura.io/v3/<<projectId>> --account='<<private key>>,1000000000000000000000'",
+    "deploy:fork": "truffle migrate --reset --network mainnetFork",
+    "deploy:testnet": "truffle migrate --reset --network testnet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ilovelili/flashloan.git"
+  },
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "web3": "^1.2.9"
+  },
+  "devDependencies": {
+    "@studydefi/money-legos": "^2.3.5",
+    "@truffle/hdwallet-provider": "^1.0.35",
+    "@uniswap/sdk": "^2.0.5",
+    "chalk": "^4.1.0",
+    "concurrently": "^5.2.0",
+    "detect-node": "^2.0.4",
+    "mongodb": "^3.5.9",
+    "node-fetch": "^2.6.0",
+    "prettier": "^2.0.5",
+    "prettier-plugin-solidity": "^1.0.0-alpha.54"
+  }
+}

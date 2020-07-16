@@ -4,14 +4,14 @@ const chalk = require("chalk");
 const config = require("./config.json");
 const Web3 = require("web3");
 const abis = require("./abis");
-const useTestnet = process.env.TESTNET;
+const useTestnet = process.env.TESTNET == "true";
 const {kovan, mainnet} = require("./addresses");
 const {ChainId, Token, TokenAmount, Pair} = require("@uniswap/sdk");
 const Flashloan = require("./build/contracts/Flashloan.json");
 
 const addresses = useTestnet ? kovan : mainnet;
-// I believe the Kovan implementation only has Kovan SAI instead of DAI
-const daiAddress = useTestnet ? addresses.tokens.sai : addresses.tokens.dai;
+const daiAddress = addresses.tokens.dai;
+const wethAddress = addresses.tokens.weth;
 
 const provider = useTestnet
   ? process.env.TESTNET_INFURA_URI
@@ -41,6 +41,7 @@ const kyber = new web3.eth.Contract(
 );
 
 async function init() {
+  console.log(`Using testnet: ${useTestnet}`);
   const networkId = await web3.eth.net.getId();
   console.log(`NetworkId is ${networkId}`);
 
@@ -72,11 +73,9 @@ async function init() {
 
       // uniswap uses weth
       const [dai, weth] = await Promise.all(
-        [
-          // I believe the Kovan implementation only has Kovan SAI instead of DAI
-          daiAddress,
-          addresses.tokens.weth,
-        ].map((tokenAddress) => Token.fetchData(chainId, tokenAddress))
+        [daiAddress, wethAddress].map((tokenAddress) =>
+          Token.fetchData(chainId, tokenAddress)
+        )
       );
 
       const daiWeth = await Pair.fetchData(dai, weth);

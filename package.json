@@ -10,7 +10,8 @@
     "start": "concurrently \"npm run price\" \"npm run arb\"",
     "fork": "ganache-cli --fork https://mainnet.infura.io/v3/<<projectId>> --account='<<private key>>,1000000000000000000000'",
     "deploy:fork": "truffle migrate --reset --network mainnetFork",
-    "deploy:testnet": "truffle migrate --reset --network testnet"
+    "deploy:testnet": "truffle migrate --reset --network testnet",
+    "deploy:mainnet": "truffle migrate --reset --network mainnet"
   },
   "repository": {
     "type": "git",

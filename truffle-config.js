@@ -11,7 +11,7 @@ module.exports = {
       provider: () =>
         new HDWalletProvider(process.env.PRIVATE_KEY, process.env.INFURA_URI),
       network_id: 1,
-      gasPrice: web3.utils.toWei("38", "gwei"), // https://ethgasstation.info/
+      gasPrice: web3.utils.toWei("25", "gwei"), // https://ethgasstation.info/
     },
     mainnetFork: {
       host: "127.0.0.1",

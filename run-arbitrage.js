@@ -12,6 +12,7 @@ const Flashloan = require("./build/contracts/Flashloan.json");
 const addresses = useTestnet ? kovan : mainnet;
 const daiAddress = addresses.tokens.dai;
 const wethAddress = addresses.tokens.weth;
+const gasLimit = config.gas_limit;
 
 const provider = useTestnet
   ? process.env.TESTNET_INFURA_URI
@@ -144,23 +145,16 @@ async function init() {
         )
       );
 
-      var [gasPrice, gasCost1, gasCost2] = await Promise.all([
+      const [gasPrice, gasCost1, gasCost2] = await Promise.all([
         web3.eth.getGasPrice(),
         web3.eth.estimateGas({from: admin}),
         web3.eth.estimateGas({from: admin}),
-        // tx1.estimateGas({from: admin}), // const gasCost1=await web3.eth.estimateGas({from: admin}); use this to make it work
-        // tx2.estimateGas({from: admin}),
+        // tx1.estimateGas({from: admin, gas: gasLimit}),
+        // tx2.estimateGas({from: admin, gas: gasLimit}),
       ]);
 
-      // sometimes estimateGas doesn't work well and it causes tx failure. We add a buffer percentage to adjust gas cost
-      gasCost1 = gasCost1 * (1 + config.gas_price_buffer_percentage / 100);
-      gasCost2 = gasCost2 * (1 + config.gas_price_buffer_percentage / 100);
-
-      console.log(`gasCost1: ${gasCost1}`);
-      console.log(`gasCost2: ${gasCost2}`);
-
-      const txCost1 = parseInt(gasCost1) * parseInt(gasPrice);
-      const txCost2 = parseInt(gasCost2) * parseInt(gasPrice);
+      const txCost1 = gasCost1 * parseInt(gasPrice);
+      const txCost2 = gasCost2 * parseInt(gasPrice);
 
       console.log(`txCost1: ${txCost1}`);
       console.log(`txCost2: ${txCost2}`);
@@ -187,7 +181,7 @@ async function init() {
           from: admin,
           to: flashloan.options.address,
           data,
-          gas: gasCost1,
+          gas: gasLimit,
           gasPrice,
         };
 
@@ -205,13 +199,15 @@ async function init() {
           from: admin,
           to: flashloan.options.address,
           data,
-          gas: gasCost2,
+          gas: gasLimit,
           gasPrice,
         };
 
         const receipt = await web3.eth.sendTransaction(txData);
         console.log(`Transaction Hash: ${receipt.transactionHash}`);
-      } /* just for testing ! */ else {
+      }
+      /* just for testing! 
+      else {
         console.log(
           chalk.red("Arbitrage opportunity found! JUST FOR TESTING!!!")
         );
@@ -225,7 +221,7 @@ async function init() {
           from: admin,
           to: flashloan.options.address,
           data,
-          gas: gasCost2,
+          gas: gasLimit,
           gasPrice,
         };
 
@@ -233,7 +229,7 @@ async function init() {
 
         const receipt = await web3.eth.sendTransaction(txData);
         console.log(`Transaction Hash: ${receipt.transactionHash}`);
-      }
+      } */
     })
     .on("error", (err) => {
       throw err;

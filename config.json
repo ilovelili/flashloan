@@ -1,4 +1,4 @@
 {
   "amount_eth": 10,
-  "gas_price_buffer_percentage": 0
+  "gas_limit": 4000000
 }

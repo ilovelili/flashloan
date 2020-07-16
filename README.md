@@ -2,13 +2,17 @@
 
 ## Mainnet Tx hash
 
-`0xcea8a17277ff7bf651d2b5e37c11a8bc74b53e1810da461fadf1d27aeec065ec`
+`0x902beeb4c4a1ff8401497f162a0cdabef571799c27bb9a706eac28ad178ca5c9`
+
+## Etherscan (Mainnet)
+
+`https://etherscan.io/address/0xeb70d06ae7fb8b5c7306b0e26a8d5a15ae9c3815`
 
 ## Contract Address
 
 ### Mainnet
 
-`0xDe0c844576356324c2029A175751d413ebE8a31f`
+`0xeb70D06Ae7Fb8b5c7306B0E26A8D5A15Ae9C3815`
 
 ### Mainnet fork
 
@@ -43,3 +47,21 @@
 > gas price: 38 gwei
 > value sent: 0 ETH
 > total cost: 0.085718082 ETH -->
+
+---
+
+> transaction hash: 0x902beeb4c4a1ff8401497f162a0cdabef571799c27bb9a706eac28ad178ca5c9
+> Blocks: 1 Seconds: 32
+> contract address: 0xeb70D06Ae7Fb8b5c7306B0E26A8D5A15Ae9C3815
+> block number: 10468402
+> block timestamp: 1594873984
+> account: 0x206671E7E3F692814aB3223162186237f61951cD
+> balance: 0.427101235
+> gas used: 2307948 (0x23376c)
+> gas price: 40 gwei
+> value sent: 0 ETH
+> total cost: 0.09231792 ETH
+
+## Ganache local ws server
+
+`ws://localhost:7545`

@@ -65,3 +65,7 @@
 ## Ganache local ws server
 
 `ws://localhost:7545`
+
+## Fix VSCode solidity compiler version warning
+
+add `solidity.compileUsingRemoteVersion` option to `v0.5.0` (`https://github.com/juanfranblanco/vscode-solidity/issues/61`)

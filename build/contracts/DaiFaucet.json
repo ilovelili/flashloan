@@ -816,12 +816,12 @@
     "1": {
       "events": {},
       "links": {},
-      "address": "0xB323f45B78239f1C8e898693Fd59cAb30C846e78",
-      "transactionHash": "0xeee9beb9dbe35261d1578bf13bb13c52fafe231c10387365c1a2795faf2c0116"
+      "address": "0x9fC169bbBb693E45F823de6d86a669780DbEF8B3",
+      "transactionHash": "0xabe0d3be42ecb0af0941b9045702a782a391424568adab165c0de417465e6d44"
     }
   },
   "schemaVersion": "3.1.0",
-  "updatedAt": "2020-07-18T13:19:15.747Z",
+  "updatedAt": "2020-07-19T05:45:27.342Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {}

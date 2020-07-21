@@ -4,11 +4,16 @@ const Ganache = require("ganache-core");
 const Web3 = require("web3");
 const chalk = require("chalk");
 
-// const abis = require("../abis");
+const Flashloan = require("../build/contracts/TestArbitrage.json");
+const DaiFaucet = require("../build/contracts/DaiFaucet.json");
+const VaultManager = require("../build/contracts/VaultManager.json");
 
-// const {mainnet: addresses} = require("../addresses");
-// const TestArbitrage = require("../build/contracts/TestArbitrage.json");
-// const DaiFaucet = require("../build/contracts/DaiFaucet.json");
+const abis = require("../abis");
+const {mainnet: addresses} = require("../addresses");
+
+const web3 = new Web3("http://localhost:8545"); // mainnet fork
+//
+//
 
 // const AMOUNT_ETH = 10;
 // const RECENT_ETH_PRICE = 230;
@@ -25,66 +30,82 @@ const chalk = require("chalk");
 jest.setTimeout(100000);
 
 // start chain (mainnet or mainnet fork)
-async function startChain() {
-  const useMainnet = process.env.MAINNET === "true";
-
-  useMainnet
-    ? console.log(chalk.red("Running on MAINNET!"))
-    : console.log(chalk.green("Running on fork"));
-
-  console.log(process.env.INFURA_URI);
-
-  let provider;
-
-  if (useMainnet) {
-    provider = process.env.INFURA_URI;
-  } else {
-    provider = Ganache.provider({
-      fork: process.env.INFURA_URI,
-      network_id: 1,
-      accounts: [
-        {
-          secretKey: process.env.PRIVATE_KEY,
-          balance: Web3.utils.toHex(Web3.utils.toWei("1000")),
-        },
-      ],
-      gasLimit: 2000000,
-    });
-  }
-
-  const web3 = new Web3(provider);
+const startChain = async () => {
   // returns account address
   return web3.eth.accounts.wallet.add(process.env.PRIVATE_KEY).address;
-
-  /***
-   * const web3 = new Web3(new Web3.providers.WebsocketProvider(provider));
-
-const AMOUNT_ETH = config.amount_eth;
-const AMOUNT_ETH_WEI = web3.utils.toWei(AMOUNT_ETH.toString());
-
-const DIRECTION = {
-  KYBER_TO_UNISWAP: 0,
-  UNISWAP_TO_KYBER: 1,
 };
-
-const {address: admin} = web3.eth.accounts.wallet.add(process.env.PRIVATE_KEY);
-
-   * 
-   * 
-   */
-}
 
 describe("Flashloan testing", () => {
   let admin;
+  let networkId;
+
+  const DAI_AMOUNT = web3.utils.toWei("50");
 
   beforeAll(async () => {
     admin = await startChain();
-    console.log(`admin is ${admin}`);
+    console.log(`Address is ${admin}`);
+
+    networkId = await web3.eth.net.getId();
+    console.log(`NetworkId is ${networkId}`);
   });
 
   test("admin should be initialized", () => {
     expect(admin).not.toBe(undefined);
     expect(admin).not.toBe("");
+  });
+
+  test("borrowing DAI from Maker", async () => {
+    const dai = new web3.eth.Contract(abis.tokens.erc20, addresses.tokens.dai);
+    const vaultManager = new web3.eth.Contract(
+      VaultManager.abi,
+      VaultManager.networks[networkId].address
+    );
+
+    console.log(`Borrowing ${web3.utils.fromWei(DAI_AMOUNT)} DAI from Maker`);
+
+    // the minimum amount of DAI is 20 when you create a vault.
+    await vaultManager.methods
+      .openVault(
+        addresses.makerdao.CDP_MANAGER,
+        addresses.makerdao.MCD_JUG,
+        addresses.makerdao.MCD_JOIN_ETH_A,
+        addresses.makerdao.MCD_JOIN_DAI,
+        DAI_AMOUNT
+      )
+      .send({
+        from: admin,
+        gas: 2000000,
+        gasPrice: 1,
+        value: DAI_AMOUNT,
+      });
+
+    const daiAdminBalance = await dai.methods.balanceOf(admin).call();
+    console.log(
+      `DAI balance of Your account: ${web3.utils.fromWei(daiAdminBalance)}`
+    );
+
+    expect(daiAdminBalance).toBe(DAI_AMOUNT);
+  });
+
+  test("transfer DAI to faucet", async () => {
+    const dai = new web3.eth.Contract(abis.tokens.erc20, addresses.tokens.dai);
+    const daiFaucetAddress = DaiFaucet.networks[networkId].address;
+
+    await dai.methods.transfer(daiFaucetAddress, DAI_AMOUNT).send({
+      from: admin,
+      gas: 200000,
+      gasPrice: 1,
+    });
+
+    const daiFaucetBalance = await dai.methods
+      .balanceOf(daiFaucetAddress)
+      .call();
+
+    console.log(
+      `DAI balance of DaiFaucet: ${web3.utils.fromWei(daiFaucetBalance)}`
+    );
+
+    expect(daiFaucetAddress).toBe(DAI_AMOUNT);
   });
 });
 
@@ -108,25 +129,6 @@ describe("Flashloan testing", () => {
 //   const DAI_FROM_MAKER = web3.utils.toWei("10");
 
 //   console.log(`Borrowing ${web3.utils.fromWei(DAI_FROM_MAKER)} DAI from Maker`);
-
-//   // start chain
-//   const admin = await startChain();
-//   console.log(`admin is ${admin}`);
-
-//   // await vaultManager.methods
-//   //   .openVault(
-//   //     addresses.makerdao.CDP_MANAGER,
-//   //     addresses.makerdao.MCD_JUG,
-//   //     addresses.makerdao.MCD_JOIN_ETH_A,
-//   //     addresses.makerdao.MCD_JOIN_DAI,
-//   //     DAI_FROM_MAKER
-//   //   )
-//   //   .send({
-//   //     from: admin,
-//   //     gas: 2000000,
-//   //     gasPrice: 1,
-//   //     value: web3.utils.toWei("10"),
-//   //   });
 
 //   // const daiAdminBalance = await dai.methods.balanceOf(admin).call();
 //   // console.log(

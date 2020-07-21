@@ -12,7 +12,7 @@
     "deploy:fork": "truffle migrate --reset --network mainnetFork",
     "deploy:testnet": "truffle migrate --reset --network testnet",
     "deploy:mainnet": "truffle migrate --reset --network mainnet",
-    "test": "jest --detectOpenHandles"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "dotenv": "^8.2.0",
-    "web3": "^1.2.9",
+    "web3": "^1.2.11",
     "chalk": "^4.1.0",
     "detect-node": "^2.0.4",
     "mongodb": "^3.5.9",
@@ -30,8 +30,8 @@
     "@uniswap/sdk": "^2.0.5"
   },
   "devDependencies": {
-    "ganache-core": "^2.10.2",
     "concurrently": "^5.2.0",
+    "ganache-core": "^2.10.2",
     "jest": "^26.1.0",
     "prettier": "^2.0.5",
     "prettier-plugin-solidity": "^1.0.0-alpha.54",

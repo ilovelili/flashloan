@@ -53,7 +53,7 @@ describe("Flashloan testing", () => {
     expect(admin).not.toBe("");
   });
 
-  test("borrowing DAI from Maker", async () => {
+  test.skip("borrowing DAI from Maker", async () => {
     const dai = new web3.eth.Contract(abis.tokens.erc20, addresses.tokens.dai);
     const vaultManager = new web3.eth.Contract(
       VaultManager.abi,
@@ -86,7 +86,7 @@ describe("Flashloan testing", () => {
     expect(daiAdminBalance).toBe(TWICE_DAI_AMOUNT);
   });
 
-  test("transfer half of DAI to faucet", async () => {
+  test.skip("transfer half of DAI to faucet", async () => {
     const dai = new web3.eth.Contract(abis.tokens.erc20, addresses.tokens.dai);
     const daiFaucetAddress = DaiFaucet.networks[networkId].address;
 
@@ -133,18 +133,26 @@ describe("Flashloan testing", () => {
         gasPrice: 1,
       });
 
+    logChainEvent(flashloan);
+  });
+
+  function logChainEvent(flashloan) {
     // event listener
     // https://www.pauric.blog/How-to-Query-and-Monitor-Ethereum-Contract-Events-with-Web3/
-    // event Hit(uint256 balanceDai, uint256 repayAmount);
-    const logs = await flashloan.getPastEvents("allEvents", {
-      toBlock: "latest",
-    });
-
-    logs.forEach((log) => {
-      const record = `Event: ${log.event}, Return values: ${JSON.stringify(
-        log.returnValues
-      )}`;
-      console.log(chalk.green(record));
-    });
-  });
+    flashloan
+      .getPastEvents("allEvents", {
+        toBlock: "latest",
+      })
+      .then((logs) => {
+        logs.forEach((log) => {
+          const record = `Event: ${log.event}, Return values: ${JSON.stringify(
+            log.returnValues
+          )}`;
+          console.log(chalk.green(record));
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }
 });

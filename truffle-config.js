@@ -14,12 +14,6 @@ module.exports = {
       network_id: 1,
       gasPrice: web3.utils.toWei("35", "gwei"), // https://ethgasstation.info/
     },
-    mainnetFork: {
-      host: "127.0.0.1",
-      port: 8545,
-      network_id: "*",
-      skipDryRun: true,
-    },
     testnet: {
       networkCheckTimeout: 10000,
       provider: () =>
@@ -28,12 +22,24 @@ module.exports = {
           process.env.INFURA_TESTNET_URI
         ),
       network_id: 42,
-      gasPrice: web3.utils.toWei("35", "gwei"),
+      gasPrice: web3.utils.toWei("70", "gwei"),
     },
     development: {
       host: "127.0.0.1",
       port: 7545,
       network_id: "*",
+    },
+    mainnetFork: {
+      host: "127.0.0.1",
+      port: 8545,
+      network_id: "*",
+      skipDryRun: true,
+    },
+    tenderly: {
+      host: "127.0.0.1",
+      port: 9545,
+      network_id: "*",
+      gasPrice: 0,
     },
   },
 };

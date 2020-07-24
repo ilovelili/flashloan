@@ -17,7 +17,10 @@ contract Flashloan is ICallee, DydxFlashloanBase {
     uint256 repayAmount;
   }
 
-  event NewArbitrage(Direction direction, uint256 profit, uint256 date);
+  event NewArbitrage(Direction indexed direction, uint256 indexed profit, uint256 indexed date);
+
+  // events for debugging
+  // event GetMinOuts(uint256 indexed minOut1, uint256 indexed minOut2);
 
   IKyberNetworkProxy kyber;
   IUniswapV2Router02 uniswap;
@@ -51,27 +54,25 @@ contract Flashloan is ICallee, DydxFlashloanBase {
     uint256 balanceDai = dai.balanceOf(address(this));
 
     if (arbInfo.direction == Direction.KyberToUniswap) {
-      // Buy ETH on Kyber
+      // Buy ETH from Kyber
       require(dai.approve(address(kyber), balanceDai), "Could not approve reserve asset sell");
       (uint256 expectedRate, ) = kyber.getExpectedRate(dai, IERC20(KYBER_ETH_ADDRESS), balanceDai);
       kyber.swapTokenToEther(dai, balanceDai, expectedRate);
-
-      // Sell ETH on Uniswap
+      // Sell ETH to Uniswap
       address[] memory path = new address[](2);
       path[0] = address(weth);
       path[1] = address(dai);
       uint256[] memory minOuts = uniswap.getAmountsOut(address(this).balance, path);
       uniswap.swapExactETHForTokens.value(address(this).balance)(minOuts[1], path, address(this), now);
     } else {
-      // Buy ETH on Uniswap
+      // Buy ETH from Uniswap
       require(dai.approve(address(uniswap), balanceDai), "Could not approve reserve asset sell");
       address[] memory path = new address[](2);
       path[0] = address(dai);
       path[1] = address(weth);
       uint256[] memory minOuts = uniswap.getAmountsOut(balanceDai, path);
       uniswap.swapExactTokensForETH(balanceDai, minOuts[1], path, address(this), now);
-
-      // Sell ETH on Kyber
+      // Sell ETH to Kyber
       (uint256 expectedRate, ) = kyber.getExpectedRate(IERC20(KYBER_ETH_ADDRESS), dai, address(this).balance);
       kyber.swapEtherToToken.value(address(this).balance)(dai, expectedRate);
     }
@@ -80,6 +81,7 @@ contract Flashloan is ICallee, DydxFlashloanBase {
     uint256 profit = balance - arbInfo.repayAmount;
     require(profit >= 0, "Not enough funds to repay dydx loan!");
     require(dai.transfer(beneficiary, profit), "Could not transfer back the profit");
+
     emit NewArbitrage(arbInfo.direction, profit, now);
   }
 
@@ -89,8 +91,6 @@ contract Flashloan is ICallee, DydxFlashloanBase {
     uint256 _amount,
     Direction _direction
   ) external {
-    ISoloMargin solo = ISoloMargin(_solo);
-
     // Get marketId from token address
     uint256 marketId = _getMarketIdFromTokenAddress(_solo, _token);
 
@@ -114,7 +114,7 @@ contract Flashloan is ICallee, DydxFlashloanBase {
     Account.Info[] memory accountInfos = new Account.Info[](1);
     accountInfos[0] = _getAccountInfo();
 
-    solo.operate(accountInfos, operations);
+    ISoloMargin(_solo).operate(accountInfos, operations);
   }
 
   // Add payable function to be able to receive ETH from Uniswap / Kyber

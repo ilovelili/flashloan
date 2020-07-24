@@ -58,35 +58,34 @@ contract Flashloan is ICallee, DydxFlashloanBase {
     // require(balanceDai >= arbInfo.repayAmount, "Not enough funds to repay dydx loan!");
 
     if (arbInfo.direction == Direction.KyberToUniswap) {
-      //Buy ETH on Kyber
+      // Buy ETH on Kyber
       require(dai.approve(address(kyber), balanceDai), "Could not approve reserve asset sell");
       (uint256 expectedRate, ) = kyber.getExpectedRate(dai, IERC20(KYBER_ETH_ADDRESS), balanceDai);
       kyber.swapTokenToEther(dai, balanceDai, expectedRate);
 
-      //Sell ETH on Uniswap
+      // Sell ETH on Uniswap
       address[] memory path = new address[](2);
       path[0] = address(weth);
       path[1] = address(dai);
-      uint256[] memory minOuts = uniswap.getAmountsOut(address(this).balance - 2, path);
-      uniswap.swapExactETHForTokens.value(address(this).balance - 2)(minOuts[0], path, address(this), now);
+      uint256[] memory minOuts = uniswap.getAmountsOut(address(this).balance, path);
+      uniswap.swapExactETHForTokens.value(address(this).balance)(minOuts[1], path, address(this), now);
     } else {
-      //Buy ETH on Uniswap
+      // Buy ETH on Uniswap
       require(dai.approve(address(uniswap), balanceDai), "Could not approve reserve asset sell");
       address[] memory path = new address[](2);
       path[0] = address(dai);
       path[1] = address(weth);
       uint256[] memory minOuts = uniswap.getAmountsOut(balanceDai, path);
-      uniswap.swapExactTokensForETH(balanceDai, minOuts[0], path, address(this), now);
+      uniswap.swapExactTokensForETH(balanceDai, minOuts[1], path, address(this), now);
 
-      //Sell ETH on Kyber
-      (uint256 expectedRate, ) = kyber.getExpectedRate(IERC20(KYBER_ETH_ADDRESS), dai, address(this).balance - 2);
-      kyber.swapEtherToToken.value(address(this).balance - 2)(dai, expectedRate);
+      // Sell ETH on Kyber
+      (uint256 expectedRate, ) = kyber.getExpectedRate(IERC20(KYBER_ETH_ADDRESS), dai, address(this).balance);
+      kyber.swapEtherToToken.value(address(this).balance)(dai, expectedRate);
     }
 
     uint256 balance = dai.balanceOf(address(this));
     uint256 profit = balance - arbInfo.repayAmount;
-
-    require(profit > 0, "There is no profit! Reverting");
+    require(profit >= 0, "Not enough funds to repay dydx loan!");
     require(dai.transfer(beneficiary, profit), "Could not transfer back the profit");
     emit NewArbitrage(arbInfo.direction, profit, now);
   }
@@ -124,4 +123,7 @@ contract Flashloan is ICallee, DydxFlashloanBase {
 
     solo.operate(accountInfos, operations);
   }
+
+  // Add payable function to be able to receive ETH from Uniswap / Kyber
+  function() external payable {}
 }

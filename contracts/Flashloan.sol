@@ -50,13 +50,6 @@ contract Flashloan is ICallee, DydxFlashloanBase {
     ArbInfo memory arbInfo = abi.decode(data, (ArbInfo));
     uint256 balanceDai = dai.balanceOf(address(this));
 
-    // Note that you can ignore the line below
-    // if your dydx account (this contract in this case)
-    // has deposited at least ~2 Wei of assets into the account
-    // to balance out the collaterization ratio
-
-    // require(balanceDai >= arbInfo.repayAmount, "Not enough funds to repay dydx loan!");
-
     if (arbInfo.direction == Direction.KyberToUniswap) {
       // Buy ETH on Kyber
       require(dai.approve(address(kyber), balanceDai), "Could not approve reserve asset sell");

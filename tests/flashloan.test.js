@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const Web3 = require("web3");
 
-const Flashloan = require("../build/contracts/TestArbitrage.json");
+const Flashloan = require("../build/contracts/Flashloan.json");
 const DaiFaucet = require("../build/contracts/DaiFaucet.json");
 const VaultManager = require("../build/contracts/VaultManager.json");
 
@@ -121,7 +121,7 @@ describe("Flashloan testing", () => {
 
     console.log("initiating flashloan Kyber => Uniswap");
     await flashloan.methods
-      .initiateFlashloan(
+      .initateFlashLoan(
         addresses.dydx.solo,
         addresses.tokens.dai,
         DAI_AMOUNT,

@@ -8,10 +8,11 @@ const web3 = new Web3(
 module.exports = {
   networks: {
     mainnet: {
+      networkCheckTimeout: 10000,
       provider: () =>
         new HDWalletProvider(process.env.PRIVATE_KEY, process.env.INFURA_URI),
       network_id: 1,
-      gasPrice: web3.utils.toWei("40", "gwei"), // https://ethgasstation.info/
+      gasPrice: web3.utils.toWei("35", "gwei"), // https://ethgasstation.info/
     },
     mainnetFork: {
       host: "127.0.0.1",
@@ -20,13 +21,14 @@ module.exports = {
       skipDryRun: true,
     },
     testnet: {
+      networkCheckTimeout: 10000,
       provider: () =>
         new HDWalletProvider(
           process.env.PRIVATE_KEY,
-          process.env.TESTNET_INFURA_URI
+          process.env.INFURA_TESTNET_URI
         ),
       network_id: 42,
-      gasPrice: web3.utils.toWei("36", "gwei"),
+      gasPrice: web3.utils.toWei("35", "gwei"),
     },
     development: {
       host: "127.0.0.1",

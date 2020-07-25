@@ -7,12 +7,7 @@ const {mainnet: addresses} = require("./addresses");
 const {ChainId, Token, TokenAmount, Pair} = require("@uniswap/sdk");
 const Flashloan = require("./build/contracts/Flashloan.json");
 
-const daiAddress = addresses.tokens.dai;
-const wethAddress = addresses.tokens.weth;
-
-const web3 = new Web3(
-  new Web3.providers.WebsocketProvider(process.env.INFURA_URI)
-);
+const web3 = new Web3(new Web3.providers.WebsocketProvider(process.env.INFURA_URI));
 
 const AMOUNT_ETH = config.amount_eth;
 const AMOUNT_ETH_WEI = web3.utils.toWei(AMOUNT_ETH.toString());
@@ -23,19 +18,14 @@ const DIRECTION = {
 };
 
 const {address: admin} = web3.eth.accounts.wallet.add(process.env.PRIVATE_KEY);
+const kyber = new web3.eth.Contract(abis.kyber.kyberNetworkProxy, addresses.kyber.kyberNetworkProxy);
+const flashloan = new web3.eth.Contract(Flashloan.abi, Flashloan.networks[networkId].address);
 
-const kyber = new web3.eth.Contract(
-  abis.kyber.kyberNetworkProxy,
-  addresses.kyber.kyberNetworkProxy
-);
-
-const flashloan = new web3.eth.Contract(
-  Flashloan.abi,
-  Flashloan.networks[networkId].address
-);
+const daiAddress = addresses.tokens.dai;
+const wethAddress = addresses.tokens.weth;
+const soloAddress = addresses.dydx.solo;
 
 async function init() {
-  console.log(`Using testnet: ${useTestnet}`);
   const networkId = await web3.eth.net.getId();
   console.log(`NetworkId is ${networkId}`);
 
@@ -46,9 +36,7 @@ async function init() {
 
       // uniswap uses weth
       const [dai, weth] = await Promise.all(
-        [daiAddress, wethAddress].map((tokenAddress) =>
-          Token.fetchData(ChainId.MAINNET, tokenAddress)
-        )
+        [daiAddress, wethAddress].map((tokenAddress) => Token.fetchData(ChainId.MAINNET, tokenAddress))
       );
 
       const daiWeth = await Pair.fetchData(dai, weth);
@@ -56,10 +44,7 @@ async function init() {
       const RECENT_ETH_PRICE = getRecentEthereumPrice();
       console.log(`Recent eth price: ${RECENT_ETH_PRICE}`);
 
-      const AMOUNT_DAI_WEI = web3.utils.toWei(
-        // since one DAI is one USD
-        parseInt(AMOUNT_ETH * RECENT_ETH_PRICE).toString()
-      );
+      const AMOUNT_DAI_WEI = web3.utils.toWei(parseInt(AMOUNT_ETH * RECENT_ETH_PRICE).toString());
       console.log(`Amount dai wei: ${AMOUNT_DAI_WEI}`);
 
       const kyberResults = await Promise.all([
@@ -68,20 +53,8 @@ async function init() {
         // src	ERC20	source ERC20 token contract address
         // dest	ERC20	destination ERC20 token contract address
         // srcQty	uint wei amount of source ERC20 token
-        kyber.methods
-          .getExpectedRate(
-            daiAddress,
-            "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-            AMOUNT_DAI_WEI
-          )
-          .call(),
-        kyber.methods
-          .getExpectedRate(
-            "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-            daiAddress,
-            AMOUNT_ETH_WEI
-          )
-          .call(),
+        kyber.methods.getExpectedRate(daiAddress, "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", AMOUNT_DAI_WEI).call(),
+        kyber.methods.getExpectedRate("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", daiAddress, AMOUNT_ETH_WEI).call(),
       ]);
 
       const kyberRates = {
@@ -97,88 +70,68 @@ async function init() {
         daiWeth.getOutputAmount(new TokenAmount(weth, AMOUNT_ETH_WEI)),
       ]);
       const uniswapRates = {
-        buy: parseFloat(
-          AMOUNT_DAI_WEI / (uniswapResults[0][0].toExact() * 10 ** 18)
-        ),
+        buy: parseFloat(AMOUNT_DAI_WEI / (uniswapResults[0][0].toExact() * 10 ** 18)),
         sell: parseFloat(uniswapResults[1][0].toExact() / AMOUNT_ETH),
       };
       console.log("Uniswap ETH/DAI");
       console.log(uniswapRates);
 
-      const [tx1, tx2] = Object.keys(DIRECTION).map((direction) =>
-        flashloan.methods.initateFlashLoan(
-          addresses.dydx.solo,
-          daiAddress,
-          AMOUNT_DAI_WEI,
-          DIRECTION[direction]
-        )
-      );
+      if (kyberRates.buy < uniswapRates.sell) {
+        const tx = flashloan.methods.initateFlashLoan(soloAddress, daiAddress, AMOUNT_DAI_WEI, DIRECTION.KYBER_TO_UNISWAP);
+        const [gasPrice, gasCost] = await Promise.all([web3.eth.getGasPrice(), tx.estimateGas({from: admin})]);
+        const txCost = parseInt(gasCost) * parseInt(gasPrice);
+        // get profit
+        const profit =
+          (parseInt(AMOUNT_ETH_WEI) / 10 ** 18) * (uniswapRates.sell - kyberRates.buy) - (txCost / 10 ** 18) * RECENT_ETH_PRICE;
 
-      // get gas cost
-      const [gasPrice, gasCost1, gasCost2] = await Promise.all([
-        web3.eth.getGasPrice(),
-        // web3.eth.estimateGas({from: admin}),
-        // web3.eth.estimateGas({from: admin}),
-        tx1.estimateGas({from: admin}),
-        tx2.estimateGas({from: admin}),
-      ]);
+        console.log(`profit: ${profit}`);
 
-      const txCost1 = parseInt(gasCost1) * parseInt(gasPrice);
-      const txCost2 = parseInt(gasCost2) * parseInt(gasPrice);
+        if (profit > 0) {
+          console.log(chalk.green("Arbitrage opportunity found!"));
+          console.log(`Buy ETH from Kyber at ${kyberRates.buy} dai`);
+          console.log(`Sell ETH to Uniswap at ${uniswapRates.sell} dai`);
+          console.log(`Expected profit: ${profit1} dai`);
 
-      console.log(`txCost1: ${txCost1}`);
-      console.log(`txCost2: ${txCost2}`);
+          const data = tx.encodeABI();
+          const txData = {
+            from: admin,
+            to: flashloan.options.address,
+            data,
+            gas: gasCost,
+            gasPrice,
+          };
+          const receipt = await web3.eth.sendTransaction(txData);
+          console.log(`Transaction hash: ${receipt.transactionHash}`);
+        }
+      }
 
-      // get profit
-      const profit1 =
-        (parseInt(AMOUNT_ETH_WEI) / 10 ** 18) *
-          (uniswapRates.sell - kyberRates.buy) -
-        (txCost1 / 10 ** 18) * RECENT_ETH_PRICE;
+      if (uniswapRates.buy < kyber.sell) {
+        const tx = flashloan.methods.initateFlashLoan(soloAddress, daiAddress, AMOUNT_DAI_WEI, DIRECTION.UNISWAP_TO_KYBER);
+        const [gasPrice, gasCost] = await Promise.all([web3.eth.getGasPrice(), tx.estimateGas({from: admin})]);
+        const txCost = parseInt(gasCost) * parseInt(gasPrice);
+        // get profit
+        const profit =
+          (parseInt(AMOUNT_ETH_WEI) / 10 ** 18) * (kyberRates.sell - uniswapRates.buy) - (txCost / 10 ** 18) * RECENT_ETH_PRICE;
 
-      const profit2 =
-        (parseInt(AMOUNT_ETH_WEI) / 10 ** 18) *
-          (kyberRates.sell - uniswapRates.buy) -
-        (txCost2 / 10 ** 18) * RECENT_ETH_PRICE;
+        console.log(`profit: ${profit}`);
 
-      console.log(`profit1: ${profit1}`);
-      console.log(`profit2: ${profit1}`);
+        if (profit > 0) {
+          console.log(chalk.green("Arbitrage opportunity found!"));
+          console.log(`Buy ETH from Uniswap at ${uniswapRates.buy} dai`);
+          console.log(`Sell ETH to Kyber at ${kyberRates.sell} dai`);
+          console.log(`Expected profit: ${profit2} dai`);
 
-      if (profit1 > 0) {
-        console.log(chalk.green("Arbitrage opportunity found!"));
-        console.log(`Buy ETH from Kyber at ${kyberRates.buy} dai`);
-        console.log(`Sell ETH to Uniswap at ${uniswapRates.sell} dai`);
-        console.log(`Expected profit: ${profit1} dai`);
-
-        // Execute arb Kyber <=> Uniswap
-        const data = tx1.encodeABI();
-        const txData = {
-          from: admin,
-          to: flashloan.options.address,
-          data,
-          gas: gasCost1,
-          gasPrice,
-        };
-
-        const receipt = await web3.eth.sendTransaction(txData);
-        console.log(`Transaction Hash: ${receipt.transactionHash}`);
-      } else if (profit2 > 0) {
-        console.log(chalk.green("Arbitrage opportunity found!"));
-        console.log(`Buy ETH from Uniswap at ${uniswapRates.buy} dai`);
-        console.log(`Sell ETH to Kyber at ${kyberRates.sell} dai`);
-        console.log(`Expected profit: ${profit2} dai`);
-
-        // Execute arb Uniswap <=> Kyber
-        const data = tx2.encodeABI();
-        const txData = {
-          from: admin,
-          to: flashloan.options.address,
-          data,
-          gas: gasCost2,
-          gasPrice,
-        };
-
-        const receipt = await web3.eth.sendTransaction(txData);
-        console.log(`Transaction Hash: ${receipt.transactionHash}`);
+          const data = tx.encodeABI();
+          const txData = {
+            from: admin,
+            to: flashloan.options.address,
+            data,
+            gas: gasCost,
+            gasPrice,
+          };
+          const receipt = await web3.eth.sendTransaction(txData);
+          console.log(`Transaction hash: ${receipt.transactionHash}`);
+        }
       }
     })
     .on("error", (err) => {
@@ -235,4 +188,5 @@ function saveRecord(record) {
 
 // go
 init();
+
 logChainEvent();

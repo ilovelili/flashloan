@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const Web3 = require("web3");
 
-const Flashloan = require("../build/contracts/Flashloan.json");
+const Flashloan = require("../build/contracts/TestableFlashloan.json");
 const DaiFaucet = require("../build/contracts/DaiFaucet.json");
 const VaultManager = require("../build/contracts/VaultManager.json");
 
@@ -24,13 +24,9 @@ describe("Flashloan testing", () => {
   const AMOUNT_ETH = 1;
   const RECENT_ETH_PRICE = 230;
 
-  const DAI_AMOUNT = web3.utils.toWei(
-    (AMOUNT_ETH * RECENT_ETH_PRICE).toString()
-  );
+  const DAI_AMOUNT = web3.utils.toWei((AMOUNT_ETH * RECENT_ETH_PRICE).toString());
 
-  const TWICE_DAI_AMOUNT = web3.utils.toWei(
-    (AMOUNT_ETH * RECENT_ETH_PRICE * 2).toString()
-  );
+  const DOUBLE_DAI_AMOUNT = web3.utils.toWei((AMOUNT_ETH * RECENT_ETH_PRICE * 2).toString());
 
   const DIRECTION = {
     KYBER_TO_UNISWAP: 0,
@@ -53,12 +49,9 @@ describe("Flashloan testing", () => {
     expect(admin).not.toBe("");
   });
 
-  test.skip("borrowing DAI from Maker", async () => {
+  test("borrowing DAI from Maker", async () => {
     const dai = new web3.eth.Contract(abis.tokens.erc20, addresses.tokens.dai);
-    const vaultManager = new web3.eth.Contract(
-      VaultManager.abi,
-      VaultManager.networks[networkId].address
-    );
+    const vaultManager = new web3.eth.Contract(VaultManager.abi, VaultManager.networks[networkId].address);
 
     console.log(`Borrowing ${web3.utils.fromWei(DAI_AMOUNT)} DAI from Maker`);
 
@@ -69,24 +62,22 @@ describe("Flashloan testing", () => {
         addresses.makerdao.MCD_JUG,
         addresses.makerdao.MCD_JOIN_ETH_A,
         addresses.makerdao.MCD_JOIN_DAI,
-        TWICE_DAI_AMOUNT
+        DOUBLE_DAI_AMOUNT
       )
       .send({
         from: admin,
         gas: 2000000,
         gasPrice: 1,
-        value: TWICE_DAI_AMOUNT,
+        value: DOUBLE_DAI_AMOUNT,
       });
 
     const daiAdminBalance = await dai.methods.balanceOf(admin).call();
-    console.log(
-      `DAI balance of Your account: ${web3.utils.fromWei(daiAdminBalance)}`
-    );
+    console.log(`DAI balance of Your account: ${web3.utils.fromWei(daiAdminBalance)}`);
 
-    expect(daiAdminBalance).toBe(TWICE_DAI_AMOUNT);
+    expect(daiAdminBalance).toBe(DOUBLE_DAI_AMOUNT);
   });
 
-  test.skip("transfer half of DAI to faucet", async () => {
+  test("transfer half of DAI to faucet", async () => {
     const dai = new web3.eth.Contract(abis.tokens.erc20, addresses.tokens.dai);
     const daiFaucetAddress = DaiFaucet.networks[networkId].address;
 
@@ -97,42 +88,29 @@ describe("Flashloan testing", () => {
       gasPrice: 1,
     });
 
-    const daiFaucetBalance = await dai.methods
-      .balanceOf(daiFaucetAddress)
-      .call();
+    const daiFaucetBalance = await dai.methods.balanceOf(daiFaucetAddress).call();
 
-    console.log(
-      `DAI balance of DaiFaucet: ${web3.utils.fromWei(daiFaucetBalance)}`
-    );
+    console.log(`DAI balance of DaiFaucet: ${web3.utils.fromWei(daiFaucetBalance)}`);
     expect(daiFaucetBalance).toBe(DAI_AMOUNT);
 
     const daiAdminBalance = await dai.methods.balanceOf(admin).call();
-    console.log(
-      `DAI balance of Your account: ${web3.utils.fromWei(daiAdminBalance)}`
-    );
+    console.log(`DAI balance of Your account: ${web3.utils.fromWei(daiAdminBalance)}`);
     expect(daiAdminBalance).toBe(DAI_AMOUNT);
   });
 
   test("initiate Flashloan", async () => {
-    const flashloan = new web3.eth.Contract(
-      Flashloan.abi,
-      Flashloan.networks[networkId].address
-    );
-
+    const flashloan = new web3.eth.Contract(Flashloan.abi, Flashloan.networks[networkId].address);
     console.log("initiating flashloan Kyber => Uniswap");
-    await flashloan.methods
-      .initateFlashLoan(
-        addresses.dydx.solo,
-        addresses.tokens.dai,
-        DAI_AMOUNT,
-        DIRECTION.KYBER_TO_UNISWAP
-      )
+
+    const logs = await flashloan.methods
+      .initateFlashLoan(addresses.dydx.solo, addresses.tokens.dai, DAI_AMOUNT, DIRECTION.KYBER_TO_UNISWAP)
       .send({
         from: admin,
         gas: 2000000,
         gasPrice: 1,
       });
 
+    console.log(logs);
     logChainEvent(flashloan);
   });
 
@@ -145,9 +123,7 @@ describe("Flashloan testing", () => {
       })
       .then((logs) => {
         logs.forEach((log) => {
-          const record = `Event: ${log.event}, Return values: ${JSON.stringify(
-            log.returnValues
-          )}`;
+          const record = `Event: ${log.event}, Return values: ${JSON.stringify(log.returnValues)}`;
           console.log(chalk.green(record));
         });
       })

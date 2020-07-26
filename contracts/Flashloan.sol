@@ -52,18 +52,27 @@ contract Flashloan is ICallee, DydxFlashloanBase {
   ) public {
     ArbInfo memory arbInfo = abi.decode(data, (ArbInfo));
     uint256 balanceDai = dai.balanceOf(address(this));
+    uint256 deadline = now + 300;
 
     if (arbInfo.direction == Direction.KyberToUniswap) {
       // Buy ETH from Kyber
       require(dai.approve(address(kyber), balanceDai), "Could not approve reserve asset sell");
       (uint256 expectedRate, ) = kyber.getExpectedRate(dai, IERC20(KYBER_ETH_ADDRESS), balanceDai);
       kyber.swapTokenToEther(dai, balanceDai, expectedRate);
+
       // Sell ETH to Uniswap
       address[] memory path = new address[](2);
       path[0] = address(weth);
       path[1] = address(dai);
+
+      // https://uniswap.org/docs/v2/smart-contracts/library#getamountsout
+      // Given an input asset amount and an array of token addresses, calculates all subsequent maximum output token amounts
       uint256[] memory minOuts = uniswap.getAmountsOut(address(this).balance, path);
-      uniswap.swapExactETHForTokens.value(address(this).balance)(minOuts[1], path, address(this), now);
+
+      // https://uniswap.org/docs/v2/smart-contracts/router02/
+      // Swaps an exact amount of ETH for as many output tokens as possible, along the route determined by the path.
+      // The first element of path must be WETH, the last is the output token
+      uniswap.swapExactETHForTokens.value(address(this).balance)(minOuts[1], path, address(this), deadline);
     } else {
       // Buy ETH from Uniswap
       require(dai.approve(address(uniswap), balanceDai), "Could not approve reserve asset sell");
@@ -71,7 +80,7 @@ contract Flashloan is ICallee, DydxFlashloanBase {
       path[0] = address(dai);
       path[1] = address(weth);
       uint256[] memory minOuts = uniswap.getAmountsOut(balanceDai, path);
-      uniswap.swapExactTokensForETH(balanceDai, minOuts[1], path, address(this), now);
+      uniswap.swapExactTokensForETH(balanceDai, minOuts[1], path, address(this), deadline);
       // Sell ETH to Kyber
       (uint256 expectedRate, ) = kyber.getExpectedRate(IERC20(KYBER_ETH_ADDRESS), dai, address(this).balance);
       kyber.swapEtherToToken.value(address(this).balance)(dai, expectedRate);

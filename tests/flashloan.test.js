@@ -49,6 +49,19 @@ describe("Flashloan testing", () => {
     expect(admin).not.toBe("");
   });
 
+  test("should get kayber expected rate", async () => {
+    const kyber = new web3.eth.Contract(abis.kyber.kyberNetworkProxy, addresses.kyber.kyberNetworkProxy);
+    const daiAddress = addresses.tokens.dai;
+
+    const daiEthRate = await kyber.methods.getExpectedRate(daiAddress, "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", DAI_AMOUNT).call();
+    const ethDaiRate = await kyber.methods.getExpectedRate("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", daiAddress, DAI_AMOUNT).call();
+
+    console.log(`Kyber DAI-ETH expectedRate: ${daiEthRate.expectedRate}, slippageRate: ${daiEthRate.slippageRate}`);
+    console.log(`Kyber ETH-DAI expectedRate: ${ethDaiRate.expectedRate}, slippageRate: ${ethDaiRate.slippageRate}`);
+    expect(daiEthRate).not.toBe(null);
+    expect(ethDaiRate).not.toBe(null);
+  });
+
   test("borrowing DAI from Maker", async () => {
     const dai = new web3.eth.Contract(abis.tokens.erc20, addresses.tokens.dai);
     const vaultManager = new web3.eth.Contract(VaultManager.abi, VaultManager.networks[networkId].address);
@@ -110,14 +123,14 @@ describe("Flashloan testing", () => {
         gasPrice: 1,
       });
 
-    console.log(logs);
-    logChainEvent(flashloan);
+    // console.log(logs);
+    await logChainEvent(flashloan);
   });
 
-  function logChainEvent(flashloan) {
+  async function logChainEvent(flashloan) {
     // event listener
     // https://www.pauric.blog/How-to-Query-and-Monitor-Ethereum-Contract-Events-with-Web3/
-    flashloan
+    await flashloan
       .getPastEvents("allEvents", {
         toBlock: "latest",
       })

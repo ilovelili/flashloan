@@ -23,6 +23,7 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
   event GetKyberExpectedRate(uint256 indexed expectedRate);
   event GetBalanceDAI(uint256 indexed balance);
   event GetProfit(int256 indexed profit);
+  event GetMinOuts(uint256[] minOuts);
 
   IKyberNetworkProxy kyber;
   IUniswapV2Router02 uniswap;
@@ -78,6 +79,10 @@ contract TestableFlashloan is ICallee, DydxFlashloanBase {
       // https://uniswap.org/docs/v2/smart-contracts/library#getamountsout
       // Given an input asset amount and an array of token addresses, calculates all subsequent maximum output token amounts
       uint256[] memory minOuts = uniswap.getAmountsOut(address(this).balance, path);
+
+      // just for testing
+      uint256[] memory minOutsTest = uniswap.getAmountsOut(1 ether, path);
+      emit GetMinOuts(minOutsTest);
 
       // https://uniswap.org/docs/v2/smart-contracts/router02/
       // Swaps an exact amount of ETH for as many output tokens as possible, along the route determined by the path.

@@ -24,6 +24,7 @@ describe("Flashloan testing", () => {
   const AMOUNT_ETH = 1;
   const RECENT_ETH_PRICE = 230;
 
+  const WETH_AMOUNT = web3.utils.toWei(AMOUNT_ETH.toString());
   const DAI_AMOUNT = web3.utils.toWei((AMOUNT_ETH * RECENT_ETH_PRICE).toString());
 
   const DOUBLE_DAI_AMOUNT = web3.utils.toWei((AMOUNT_ETH * RECENT_ETH_PRICE * 2).toString());
@@ -44,9 +45,10 @@ describe("Flashloan testing", () => {
     console.log(`NetworkId is ${networkId}`);
   });
 
-  test("admin should be initialized", () => {
+  test("admin should be initialized", async () => {
     expect(admin).not.toBe(undefined);
     expect(admin).not.toBe("");
+    console.log(`admin balance: ${await web3.eth.getBalance(admin)}`);
   });
 
   test("should get kayber expected rate", async () => {
@@ -62,11 +64,34 @@ describe("Flashloan testing", () => {
     expect(ethDaiRate).not.toBe(null);
   });
 
+  test("should get uniswap amount out", async () => {
+    const {ChainId, Token, TokenAmount, Pair} = require("@uniswap/sdk");
+    const daiAddress = addresses.tokens.dai;
+    const wethAddress = addresses.tokens.weth;
+
+    const [dai, weth] = await Promise.all([daiAddress, wethAddress].map((tokenAddress) => Token.fetchData(ChainId.MAINNET, tokenAddress)));
+    const daiWeth = await Pair.fetchData(dai, weth);
+
+    // input dai, get weth
+    const amountOutWeth = daiWeth.getOutputAmount(new TokenAmount(dai, DAI_AMOUNT));
+    // input weth, get dai
+    const amountOutDai = daiWeth.getOutputAmount(new TokenAmount(weth, WETH_AMOUNT));
+
+    const amountOutDaiExact = amountOutDai[0].toExact();
+    const amountOutWethExact = amountOutWeth[0].toExact();
+
+    console.log(`AmountOut Dai(Exact): ${web3.utils.toWei(amountOutDaiExact)}`);
+    console.log(`AmountOut Weth(Exact): ${web3.utils.toWei(amountOutWethExact)}`);
+
+    expect(amountOutDaiExact).not.toBe(null);
+    expect(amountOutWethExact).not.toBe(null);
+  });
+
   test("borrowing DAI from Maker", async () => {
     const dai = new web3.eth.Contract(abis.tokens.erc20, addresses.tokens.dai);
     const vaultManager = new web3.eth.Contract(VaultManager.abi, VaultManager.networks[networkId].address);
 
-    console.log(`Borrowing ${web3.utils.fromWei(DAI_AMOUNT)} DAI from Maker`);
+    console.log(`Borrowing ${web3.utils.fromWei(DOUBLE_DAI_AMOUNT)} DAI from Maker`);
 
     // the minimum amount of DAI is 20 when you create a vault.
     await vaultManager.methods

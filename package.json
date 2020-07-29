@@ -5,9 +5,7 @@
   "license": "ISC",
   "main": "index.js",
   "scripts": {
-    "price": "node poll-price.js",
-    "arb": "node run-arbitrage.js",
-    "start": "concurrently \"npm run price\" \"npm run arb\"",
+    "start": "node run-arbitrage.js",
     "fork": "ganache-cli --fork https://mainnet.infura.io/v3/18c0c6beb5764a6fbd1e8a71ec841e8a --account='0xbfa655126938af76192473971d418b82c00f080401ac7d6a8f3cce0323f93be7,1000000000000000000000'",
     "deploy:fork": "truffle migrate --reset --network mainnetFork",
     "deploy:testnet": "truffle migrate --reset --network testnet",

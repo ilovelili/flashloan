@@ -1,28 +1,21 @@
 require("dotenv").config();
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const Web3 = require("web3");
-const web3 = new Web3(
-  new Web3.providers.WebsocketProvider(process.env.INFURA_URI)
-);
+const web3 = new Web3(new Web3.providers.WebsocketProvider(process.env.INFURA_URI));
 
 module.exports = {
   networks: {
     mainnet: {
       networkCheckTimeout: 10000,
-      provider: () =>
-        new HDWalletProvider(process.env.PRIVATE_KEY, process.env.INFURA_URI),
+      provider: () => new HDWalletProvider(process.env.PRIVATE_KEY, process.env.INFURA_URI),
       network_id: 1,
       gasPrice: web3.utils.toWei("35", "gwei"), // https://ethgasstation.info/
     },
     testnet: {
       networkCheckTimeout: 10000,
-      provider: () =>
-        new HDWalletProvider(
-          process.env.PRIVATE_KEY,
-          process.env.INFURA_TESTNET_URI
-        ),
+      provider: () => new HDWalletProvider(process.env.PRIVATE_KEY, process.env.INFURA_TESTNET_URI),
       network_id: 42,
-      gasPrice: web3.utils.toWei("70", "gwei"),
+      gasPrice: web3.utils.toWei("100", "gwei"),
     },
     development: {
       host: "127.0.0.1",

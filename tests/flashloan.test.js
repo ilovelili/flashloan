@@ -72,19 +72,21 @@ describe("Flashloan testing", () => {
     const [dai, weth] = await Promise.all([daiAddress, wethAddress].map((tokenAddress) => Token.fetchData(ChainId.MAINNET, tokenAddress)));
     const daiWeth = await Pair.fetchData(dai, weth);
 
-    // input dai, get weth
-    const amountOutWeth = daiWeth.getOutputAmount(new TokenAmount(dai, DAI_AMOUNT));
     // input weth, get dai
     const amountOutDai = daiWeth.getOutputAmount(new TokenAmount(weth, WETH_AMOUNT));
-
     const amountOutDaiExact = amountOutDai[0].toExact();
-    const amountOutWethExact = amountOutWeth[0].toExact();
-
     console.log(`AmountOut Dai(Exact): ${web3.utils.toWei(amountOutDaiExact)}`);
-    console.log(`AmountOut Weth(Exact): ${web3.utils.toWei(amountOutWethExact)}`);
+    expect(amountOutDai).not.toBe(null);
+  });
 
-    expect(amountOutDaiExact).not.toBe(null);
-    expect(amountOutWethExact).not.toBe(null);
+  test("should get eth price", async () => {
+    const kyber = new web3.eth.Contract(abis.kyber.kyberNetworkProxy, addresses.kyber.kyberNetworkProxy);
+    const daiAddress = addresses.tokens.dai;
+    const ONE_ETH_WEI = web3.utils.toBN(web3.utils.toWei("1"));
+
+    const results = await kyber.methods.getExpectedRate("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", daiAddress, 1).call();
+    const ethPrice = web3.utils.toBN("1").mul(web3.utils.toBN(results.expectedRate)).div(ONE_ETH_WEI);
+    console.log(`eth price is ${ethPrice}`);
   });
 
   test("borrowing DAI from Maker", async () => {

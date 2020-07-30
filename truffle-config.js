@@ -9,13 +9,14 @@ module.exports = {
       networkCheckTimeout: 10000,
       provider: () => new HDWalletProvider(process.env.PRIVATE_KEY, process.env.INFURA_URI),
       network_id: 1,
-      gasPrice: web3.utils.toWei("35", "gwei"), // https://ethgasstation.info/
+      gasPrice: web3.utils.toWei("38", "gwei"), // https://ethgasstation.info/
+      gas: 8000000,
     },
     testnet: {
       networkCheckTimeout: 10000,
       provider: () => new HDWalletProvider(process.env.PRIVATE_KEY, process.env.INFURA_TESTNET_URI),
       network_id: 42,
-      gasPrice: web3.utils.toWei("100", "gwei"),
+      gasPrice: web3.utils.toWei("46", "gwei"),
     },
     development: {
       host: "127.0.0.1",

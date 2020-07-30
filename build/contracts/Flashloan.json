@@ -12802,19 +12802,19 @@
           "anonymous": false,
           "inputs": [
             {
-              "indexed": false,
+              "indexed": true,
               "internalType": "enum Flashloan.Direction",
               "name": "direction",
               "type": "uint8"
             },
             {
-              "indexed": false,
+              "indexed": true,
               "internalType": "uint256",
               "name": "profit",
               "type": "uint256"
             },
             {
-              "indexed": false,
+              "indexed": true,
               "internalType": "uint256",
               "name": "date",
               "type": "uint256"
@@ -12825,12 +12825,13 @@
         }
       },
       "links": {},
-      "address": "0x44130175e974FEf8889413B40bE2F62116075433",
-      "transactionHash": "0xf614cb2fc02e2406319b01c93732b8ef6f1c7d62d8f081fb14a9a1c3c06b8f5c"
+      "address": "0x70EdAEc34b02DeB6Ee7789227dd3587014C717fe",
+      "transactionHash": "0x2d0988b9f25f593d3c5b7fcb992a91ff298b8d130b40aff728d33d3c546f03c0"
     }
   },
   "schemaVersion": "3.1.0",
-  "updatedAt": "2020-07-26T10:19:38.380Z",
+  "updatedAt": "2020-07-30T01:08:01.559Z",
+  "networkType": "ethereum",
   "devdoc": {
     "methods": {}
   },

@@ -130,7 +130,7 @@ async function init() {
       }
     })
     .on("error", (err) => {
-      console.error(err);
+      // console.error(err);
     });
 }
 

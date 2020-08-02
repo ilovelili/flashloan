@@ -19,7 +19,6 @@ const DIRECTION = {
 
 const {address: admin} = web3.eth.accounts.wallet.add(process.env.PRIVATE_KEY);
 const kyber = new web3.eth.Contract(abis.kyber.kyberNetworkProxy, addresses.kyber.kyberNetworkProxy);
-const flashloan = new web3.eth.Contract(Flashloan.abi, Flashloan.networks[networkId].address);
 
 const daiAddress = addresses.tokens.dai;
 const wethAddress = addresses.tokens.weth;
@@ -27,8 +26,8 @@ const soloAddress = addresses.dydx.solo;
 
 async function init() {
   const networkId = await web3.eth.net.getId();
+  const flashloan = new web3.eth.Contract(Flashloan.abi, Flashloan.networks[networkId].address);
   console.log(`NetworkId is ${networkId}`);
-
   // update eth price
   let ethPrice;
   const updateEthPrice = async () => {
@@ -50,7 +49,7 @@ async function init() {
       );
       const daiWeth = await Pair.fetchData(dai, weth);
 
-      const AMOUNT_DAI_WEI = web3.utils.toWei(parseInt(AMOUNT_ETH * ethPrice).toString());
+      const AMOUNT_DAI_WEI = web3.utils.toBN(web3.utils.toWei(parseInt(AMOUNT_ETH * ethPrice).toString()));
       console.log(`Amount dai wei: ${AMOUNT_DAI_WEI}`);
 
       // get eth from Kyber and Uniswap
@@ -124,7 +123,9 @@ async function init() {
     });
 }
 
-function logChainEvent() {
+async function logChainEvent() {
+  const networkId = await web3.eth.net.getId();
+  const flashloan = new web3.eth.Contract(Flashloan.abi, Flashloan.networks[networkId].address);
   // log event
   flashloan.events
     .NewArbitrage()

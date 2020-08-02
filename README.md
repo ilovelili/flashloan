@@ -2,17 +2,17 @@
 
 ## Mainnet Tx hash
 
-`0x902beeb4c4a1ff8401497f162a0cdabef571799c27bb9a706eac28ad178ca5c9`
+`0x90d643335ea8987a3abdcb12b852c223d6b6c5322ec82e09a92aa4918deed4b7`
 
 ## Etherscan (Mainnet)
 
-`https://etherscan.io/address/0xeb70d06ae7fb8b5c7306b0e26a8d5a15ae9c3815`
+`https://etherscan.io/address/0xE9BE75689f62Ee95c26abf52C8bFC3d737090579`
 
 ## Contract Address
 
 ### Mainnet
 
-`0xeb70D06Ae7Fb8b5c7306B0E26A8D5A15Ae9C3815`
+`0xE9BE75689f62Ee95c26abf52C8bFC3d737090579`
 
 ### Mainnet fork
 

@@ -17,15 +17,16 @@
     "url": "git+https://github.com/ilovelili/flashloan.git"
   },
   "dependencies": {
-    "dotenv": "^8.2.0",
-    "web3": "^1.2.11",
-    "chalk": "^4.1.0",
-    "detect-node": "^2.0.4",
-    "mongodb": "^3.5.9",
-    "node-fetch": "^2.6.0",
     "@studydefi/money-legos": "^2.3.5",
     "@truffle/hdwallet-provider": "^1.0.35",
-    "@uniswap/sdk": "^2.0.5"
+    "@uniswap/sdk": "^2.0.5",
+    "chalk": "^4.1.0",
+    "detect-node": "^2.0.4",
+    "dotenv": "^8.2.0",
+    "eth-gas-reporter": "^0.2.17",
+    "mongodb": "^3.5.9",
+    "node-fetch": "^2.6.0",
+    "web3": "^1.2.11"
   },
   "devDependencies": {
     "concurrently": "^5.2.0",

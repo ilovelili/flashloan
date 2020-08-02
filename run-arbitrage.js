@@ -1,5 +1,6 @@
 require("dotenv").config();
 const chalk = require("chalk");
+const fs = require("fs");
 const config = require("./config.json");
 const Web3 = require("web3");
 const abis = require("./abis");
@@ -91,6 +92,11 @@ async function init() {
           };
           const receipt = await web3.eth.sendTransaction(txData);
           console.log(`Transaction hash: ${receipt.transactionHash}`);
+
+          const record = `${new Date().getTime()}: Kyber -> Uniswap | Tx hash: ${receipt.transactionHash}\n`;
+          fs.appendFile("oppertunity.json", record, (err) => {
+            if (err) console.log(err);
+          });
         }
       }
 
@@ -115,6 +121,11 @@ async function init() {
           };
           const receipt = await web3.eth.sendTransaction(txData);
           console.log(`Transaction hash: ${receipt.transactionHash}`);
+
+          const record = `${new Date().getTime()}: Uniswap -> Kyber | Tx hash: ${receipt.transactionHash}\n`;
+          fs.appendFile("oppertunity.json", record, (err) => {
+            if (err) console.log(err);
+          });
         }
       }
     })
@@ -135,10 +146,14 @@ async function logChainEvent() {
       const date = event.returnValues.date;
       const record = `direction: ${direction}, profit: ${profit}, date: ${date}\n`;
       console.log(chalk.green(record));
+
       saveRecord(record);
+      fs.appendFile("transaction.json", record, (err) => {
+        if (err) console.log(err);
+      });
     })
     .on("error", (err) => {
-      console.error(err);
+      // console.error(err);
     });
 }
 

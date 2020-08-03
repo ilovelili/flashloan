@@ -55,6 +55,7 @@ async function init() {
       ).catch((err) => console.error("failed to fetch uniswap token data"));
 
       const daiWeth = await Pair.fetchData(dai, weth).catch((err) => console.error("failed to fetch uniswap pair data"));
+      if (!daiWeth) return;
 
       const AMOUNT_DAI_WEI = web3.utils.toBN(web3.utils.toWei(parseInt(AMOUNT_ETH * ethPrice).toString()));
       console.log(`Amount dai wei: ${AMOUNT_DAI_WEI}`);
